@@ -97,6 +97,6 @@ public class JWTServlet extends HttpServlet implements ExistExtensionServlet {
      */
     @Override
     public String getPathSpec() {
-        return "jwt";
+        return "/jwt";
     }
 }

@@ -104,7 +104,7 @@ public class IPRangeRealm extends AbstractRealm {
     @Override
     public Subject authenticate(final String ipAddress, final Object credentials) throws AuthenticationException {
 
-        // Elevaste to system privileges
+        // Elevate to system privileges
         try (final DBBroker broker = getSecurityManager().database().get(Optional.of(getSecurityManager().getSystemSubject()))) {
 
             // Convert IP address
