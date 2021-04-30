@@ -2,12 +2,13 @@
 
 To enable JWT authentication you need to make sure that the file /db/system/security/config.xml content something similar to that below
 
-```
+```xml
 <security-manager xmlns="http://exist-db.org/Configuration" ...
 	...
     <realm id="JWT">
         <context>
             <domain>...</domain>
+            <secret>...</secret>
             <account>
                 <property>...</property>
                 <metadata-property>..</metadata-property>
@@ -26,4 +27,97 @@ To enable JWT authentication you need to make sure that the file /db/system/secu
     </realm>
 	...
 </security-manager>
+```
+
+For the following JWT
+
+```json
+{
+    "sub": "00uixa271s6x7qt8I0h7",
+    "ver": 1,
+    "iss": "https://${yourOktaDomain}",
+    "aud": "0oaoiuhhch8VRtBnC0h7",
+    "iat": 1574201516,
+    "exp": 1574205116,
+    "jti": "ID.ewMNfSvcpuqyS93OgVeCN3F2LseqROkyYjz7DNb9yhs",
+    "amr": [
+        "pwd",
+        "mfa",
+        "kba"
+    ],
+    "idp": "00oixa26ycdNcX0VT0h7",
+    "nonce": "UBGW",
+    "auth_time": 1574201433,
+    "groups": [
+        "Everyone",
+        "IT"
+    ]
+}
+```
+
+Here is the realm description
+
+
+```xml
+<realm id="JWT" version="1.0" principals-are-case-insensitive="true">
+    <context>
+        <domain>domain.here</domain>
+        <secret>...</secret>
+        <account>
+            <property key="name">idp</property>
+        </account>
+        <group>
+            <claim>groups</claim>
+        </group>
+    </context>
+</realm>
+```
+
+If the `groups` entry contained JSON objects like the folllowing:
+
+```json
+{
+    "sub": "00uixa271s6x7qt8I0h7",
+    "ver": 1,
+    "iss": "https://${yourOktaDomain}",
+    "aud": "0oaoiuhhch8VRtBnC0h7",
+    "iat": 1574201516,
+    "exp": 1574205116,
+    "jti": "ID.ewMNfSvcpuqyS93OgVeCN3F2LseqROkyYjz7DNb9yhs",
+    "amr": [
+        "pwd",
+        "mfa",
+        "kba"
+    ],
+    "idp": "00oixa26ycdNcX0VT0h7",
+    "nonce": "UBGW",
+    "auth_time": 1574201433,
+    "groups": [
+        {
+          "name" : "Everyone"
+        },
+        {
+          "name" : "IT"
+        }
+    ]
+}
+```
+
+Then the realm description would be:
+
+
+```xml
+<realm id="JWT" version="1.0" principals-are-case-insensitive="true">
+    <context>
+        <domain>domain.here</domain>
+        <secret>...</secret>
+        <account>
+            <property key="name">idp</property>
+        </account>
+        <group>
+            <claim>groups</claim>
+            <property key="name">name</property>
+        </group>
+    </context>
+</realm>
 ```
