@@ -87,3 +87,34 @@ Here is the example from the eXist-db documentation page:
     </context>
 </realm>
 ```
+
+Here is a sample LDAP account entry in
+`/db/system/security/LDAP/accounts/u113896@example.com.xml`:
+
+```xml
+<account xmlns="http://exist-db.org/Configuration" id="14">
+    <!--<password></password>-->
+    <!--<digestPassword></digestPassword>-->
+    <group name="domain users@example.com"/>
+    <group name="mm-user"/>
+    <group name="mm-modeler"/>
+    <group name="dba"/>
+    <group name="mm-reconcile"/>
+    <expired>false</expired>
+    <enabled>true</enabled>
+    <umask>022</umask>
+    <metadata key="http://axschema.org/namePerson/last">Cahlander</metadata>
+    <metadata key="http://axschema.org/namePerson/first">Loren</metadata>
+    <metadata key="http://axschema.org/namePerson">Loren Cahlander</metadata>
+    <metadata key="http://axschema.org/contact/email">Loren.Cahlander@example.com</metadata>
+    <name>u113896@example.com</name>
+</account>
+```
+
+Here is a sample LDAP group entry in `/db/system/security/LDAP/groups/domain user@example.com.xml`:
+
+```xml
+<group xmlns="http://exist-db.org/Configuration" id="16">
+    <name>domain users@example.com</name>
+</group>
+```
