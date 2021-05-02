@@ -1,5 +1,6 @@
 # IP Range Authentication Realm
 
+The IPRange Realm is enabled by default in the build configuration file *extensions/security/pom.xml* and include `<module>iprange</module>` in the `<modules/>` element.
 To enable IPRange authentication you need to make sure that the file /db/system/security/config.xml content something similar to that below
 
 ```xml

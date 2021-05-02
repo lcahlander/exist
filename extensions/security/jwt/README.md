@@ -1,5 +1,6 @@
-# JSON Web Token Authentication Realm
+# JSON Web Token (JWT) Authentication Realm
 
+The JWT Realm is enabled by default in the build configuration file `extensions/security/pom.xml` and include `<module>jwt</module>` in the `<modules/>` element.
 To enable JWT authentication you need to make sure that the file /db/system/security/config.xml content something similar to that below
 
 ```xml

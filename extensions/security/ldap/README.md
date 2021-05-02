@@ -1,5 +1,6 @@
 # LDAP Authentication Realm
 
+The LDAP Realm is enabled by default in the build configuration file *extensions/security/pom.xml* and include `<module>ldap</module>` in the `<modules/>` element.
 To enable LDAP authentication you need to make sure that the file /db/system/security/config.xml content something similar to that below 
 
 ```xml
@@ -38,9 +39,13 @@ To enable LDAP authentication you need to make sure that the file /db/system/sec
 
 * url - the URL to your LDAP directory server.
 * base - the LDAP base to use when resolving users and groups
+* The `default-username` and `default-password` elements are used to communicate with the LDAP server if a non-LDAP user requests information from LDAP server.
+* The `search-*` elements are mapping for names.
+* The `metadata-search-attribute` elements are used for mapping LDAP account metadata onto eXist-db account metadata.
+* The `whitelist` element contains the allowed groups for authentication. The `blacklist` element contains groups that are not allowed.
+* The `transformation` element contains actions to be performed after first authentication.
 
-Here is the example from the eXist-db documentation page:
-
+Here is an example:
 
 ```xml
 <realm id="LDAP" version="1.0" principals-are-case-insensitive="true">
