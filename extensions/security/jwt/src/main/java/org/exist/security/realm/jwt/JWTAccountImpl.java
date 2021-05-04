@@ -30,6 +30,10 @@ import org.exist.security.PermissionDeniedException;
 import org.exist.security.internal.AccountImpl;
 import org.exist.storage.DBBroker;
 
+/**
+ * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
+ *
+ */
 public class JWTAccountImpl extends AccountImpl {
     public JWTAccountImpl(final AbstractRealm realm, final Configuration configuration) throws ConfigurationException {
         super(realm, configuration);

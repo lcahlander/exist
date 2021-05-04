@@ -38,6 +38,10 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+/**
+ * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
+ *
+ */
 public class JWTServlet extends HttpServlet implements ExistExtensionServlet {
 
     protected final static Logger LOG = LogManager.getLogger(JWTServlet.class);

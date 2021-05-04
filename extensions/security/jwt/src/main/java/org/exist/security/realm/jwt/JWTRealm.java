@@ -34,9 +34,16 @@ import org.exist.config.ConfigurationException;
 import org.exist.config.annotation.*;
 import org.exist.security.*;
 import org.exist.security.internal.SecurityManagerImpl;
+import org.exist.storage.DBBroker;
+import org.exist.storage.txn.Txn;
 
+import java.util.List;
 import java.util.Map;
 
+/**
+ * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
+ *
+ */
 @ConfigurationClass("realm") //TODO: id = JWT
 public class JWTRealm extends AbstractRealm {
 
@@ -51,6 +58,8 @@ public class JWTRealm extends AbstractRealm {
 
     @ConfigurationFieldAsElement("context")
     protected JWTContextFactory jwtContextFactory;
+
+    protected DecodedJWT decodedJWT;
 
     public JWTRealm(final SecurityManagerImpl sm, final Configuration config) {
         super(sm, config);
@@ -70,6 +79,17 @@ public class JWTRealm extends AbstractRealm {
     static JWTRealm getInstance() { return instance; }
 
     @Override
+    public String getId() {
+        return ID;
+    }
+
+    @Override
+    public void start(final DBBroker broker, final Txn transaction) throws EXistException {
+        super.start(broker, transaction);
+    }
+
+
+    @Override
     public boolean deleteAccount(Account account) throws PermissionDeniedException, EXistException, ConfigurationException {
         return false;
     }
@@ -83,13 +103,42 @@ public class JWTRealm extends AbstractRealm {
     public Subject authenticate(String accountName, Object credentials) throws AuthenticationException {
         Algorithm algorithmHS = Algorithm.HMAC256("secret");
         JWTVerifier verifier = JWT.require(algorithmHS).withIssuer("auth0").build();
-        DecodedJWT jwt = verifier.verify(accountName);
-        final Map<String, Claim> claims = jwt.getClaims();
-        return null;
+        decodedJWT = verifier.verify(accountName);
+        final String name1 = this.jwtContextFactory.getAccount().getSearchAttribute(JWTAccount.JWTPropertyKey.valueOf("name"));
+        String name = ((Claim) decodedJWT.getClaim(name1)).asString();
+        final AbstractAccount account = (AbstractAccount) getAccount(name);
+        return (Subject) account;
+    }
+    @Override
+    public final synchronized Account getAccount(String name) {
+
+        //first attempt to get the cached account
+        final Account acct = super.getAccount(name);
+
+        if (acct != null) {
+
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("Cached used.");
+            }
+
+            updateGroupsInDatabase(this.decodedJWT, acct);
+
+            return acct;
+        } else {
+            return createAccountInDatabase(this.decodedJWT, name);
+        }
+
     }
 
-    @Override
-    public String getId() {
-        return ID;
+    private void updateGroupsInDatabase(DecodedJWT decodedJWT, Account acct) {
+    }
+
+    private Account createAccountInDatabase(DecodedJWT decodedJWT, String name) {
+        final String givenNameProperty = this.jwtContextFactory.getAccount().getMetadataSearchAttribute(AXSchemaType.FIRSTNAME);
+        final String familyNameProperty = this.jwtContextFactory.getAccount().getMetadataSearchAttribute(AXSchemaType.LASTNAME);
+        String givenName = ((Claim) decodedJWT.getClaim(givenNameProperty)).asString();
+        String familyName = ((Claim) decodedJWT.getClaim(familyNameProperty)).asString();
+        final List<String> groups = ((Claim) decodedJWT.getClaim("groups")).asList(String.class);
+        return null;
     }
 }

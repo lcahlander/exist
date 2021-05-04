@@ -33,6 +33,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
+ *
+ */
 @ConfigurationClass("account")
 public class JWTAccount  implements Configurable {
 
@@ -53,6 +57,8 @@ public class JWTAccount  implements Configurable {
     public JWTAccount(final Configuration config) {
         this.configuration = Configurator.configure(this, config);
     }
+
+
     public JWTPrincipalBlackList getBlackList() {
         return blackList;
     }

@@ -33,6 +33,10 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
+ *
+ */
 @ConfigurationClass("group")
 public class JWTGroup implements Configurable {
     @ConfigurationFieldAsElement("property")

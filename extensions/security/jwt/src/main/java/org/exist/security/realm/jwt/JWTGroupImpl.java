@@ -30,6 +30,10 @@ import org.exist.storage.DBBroker;
 
 import java.util.List;
 
+/**
+ * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
+ *
+ */
 public class JWTGroupImpl extends GroupImpl {
     public JWTGroupImpl(AbstractRealm realm, Configuration configuration) throws ConfigurationException {
         super(realm, configuration);

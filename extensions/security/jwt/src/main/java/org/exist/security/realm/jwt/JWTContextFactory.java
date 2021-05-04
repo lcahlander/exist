@@ -26,6 +26,10 @@ import org.exist.config.Configuration;
 import org.exist.config.Configurator;
 import org.exist.config.annotation.ConfigurationFieldAsElement;
 
+/**
+ * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
+ *
+ */
 public class JWTContextFactory implements Configurable {
 
     @ConfigurationFieldAsElement("domain")

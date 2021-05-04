@@ -27,9 +27,9 @@ import org.exist.config.Configurator;
 import org.exist.config.annotation.ConfigurationClass;
 
 /**
- * @author lcahlander
+ * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
+ *
  */
-
 @ConfigurationClass("whitelist")
 public class JWTPrincipalWhiteList extends AbstractJWTPrincipalRestrictionList implements Configurable {
 
