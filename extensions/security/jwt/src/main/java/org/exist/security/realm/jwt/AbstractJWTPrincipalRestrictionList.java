@@ -21,47 +21,46 @@
  */
 package org.exist.security.realm.jwt;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.exist.config.Configurable;
 import org.exist.config.Configuration;
 import org.exist.config.Configurator;
+import org.exist.config.annotation.ConfigurationClass;
 import org.exist.config.annotation.ConfigurationFieldAsElement;
 
-public class JWTContextFactory implements Configurable {
 
-    @ConfigurationFieldAsElement("domain")
-    protected String domain = null;
+/**
+ * @author lcahlander
+ */
+@ConfigurationClass("")
+public abstract class AbstractJWTPrincipalRestrictionList implements Configurable {
 
-    @ConfigurationFieldAsElement("secret")
-    protected String secret = null;
+    @ConfigurationFieldAsElement("principal")
+    private List<String> principals = new ArrayList<>();
 
-    @ConfigurationFieldAsElement("account")
-    protected JWTAccount account;
+    protected Configuration configuration;
 
-    @ConfigurationFieldAsElement("group")
-    protected JWTGroup group;
-
-    private Configuration configuration = null;
-
-    public JWTContextFactory(final Configuration config) {
-        configuration = Configurator.configure(this, config);
-    }
-
-    public String getDomain() { return domain; }
-
-    public String getSecret() { return secret; }
-
-    public JWTAccount getAccount() { return account; }
-
-    public JWTGroup getGroup() { return group; }
-
-    // configurable methods
-    @Override
-    public boolean isConfigured() {
-        return (configuration != null);
+    public AbstractJWTPrincipalRestrictionList(final Configuration config) {
+        this.configuration = Configurator.configure(this, config);
     }
 
     @Override
     public Configuration getConfiguration() {
         return configuration;
+    }
+
+    @Override
+    public boolean isConfigured() {
+        return (configuration != null);
+    }
+
+    public List<String> getPrincipals() {
+        return principals;
+    }
+
+    public void addPrincipal(String principal) {
+        this.principals.add(principal);
     }
 }

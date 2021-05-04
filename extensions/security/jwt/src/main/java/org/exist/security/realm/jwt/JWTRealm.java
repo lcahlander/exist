@@ -1,3 +1,24 @@
+/*
+ * eXist-db Open Source Native XML Database
+ * Copyright (C) 2021 The eXist-db Authors
+ *
+ * info@exist-db.org
+ * http://www.exist-db.org
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
+ */
 package org.exist.security.realm.jwt;
 
 import com.auth0.jwt.JWT;
@@ -28,9 +49,22 @@ public class JWTRealm extends AbstractRealm {
     @ConfigurationFieldAsAttribute("version")
     public static final String version = "1.0";
 
+    @ConfigurationFieldAsElement("context")
+    protected JWTContextFactory jwtContextFactory;
+
     public JWTRealm(final SecurityManagerImpl sm, final Configuration config) {
         super(sm, config);
         instance = this;
+    }
+
+    protected JWTContextFactory ensureContextFactory() {
+        if (this.jwtContextFactory == null) {
+            if (LOG.isDebugEnabled()) {
+                LOG.debug("No JWTContextFactory specified - creating a default instance.");
+            }
+            this.jwtContextFactory = new JWTContextFactory(configuration);
+        }
+        return this.jwtContextFactory;
     }
 
     static JWTRealm getInstance() { return instance; }

@@ -21,25 +21,24 @@
  */
 package org.exist.security.realm.jwt;
 
+import org.exist.config.Configurable;
 import org.exist.config.Configuration;
-import org.exist.config.ConfigurationException;
-import org.exist.security.AbstractRealm;
-import org.exist.security.Account;
-import org.exist.security.internal.GroupImpl;
-import org.exist.storage.DBBroker;
+import org.exist.config.Configurator;
+import org.exist.config.annotation.ConfigurationClass;
 
-import java.util.List;
+/**
+ * @author lcahlander
+ */
 
-public class JWTGroupImpl extends GroupImpl {
-    public JWTGroupImpl(AbstractRealm realm, Configuration configuration) throws ConfigurationException {
-        super(realm, configuration);
-    }
+@ConfigurationClass("blacklist")
+public class JWTPrincipalBlackList extends AbstractJWTPrincipalRestrictionList implements Configurable {
 
-    public JWTGroupImpl(DBBroker broker, AbstractRealm realm, int id, String name) throws ConfigurationException {
-        super(broker, realm, id, name);
-    }
+    public JWTPrincipalBlackList(final Configuration config) {
+        super(config);
 
-    public JWTGroupImpl(DBBroker broker, AbstractRealm realm, int id, String name, List<Account> managers) throws ConfigurationException {
-        super(broker, realm, id, name, managers);
+        //it require, because class's fields initializing after super constructor
+        if (this.configuration != null) {
+            this.configuration = Configurator.configure(this, this.configuration);
+        }
     }
 }
