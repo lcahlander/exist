@@ -38,6 +38,9 @@ public class JWTContextFactory implements Configurable {
     @ConfigurationFieldAsElement("secret")
     protected String secret = null;
 
+    @ConfigurationFieldAsElement("cookie")
+    protected String cookie = null;
+
     @ConfigurationFieldAsElement("account")
     protected JWTAccount account;
 
@@ -53,6 +56,8 @@ public class JWTContextFactory implements Configurable {
     public String getDomain() { return domain; }
 
     public String getSecret() { return secret; }
+
+    public String getCookie() { return cookie; }
 
     public JWTAccount getAccount() { return account; }
 

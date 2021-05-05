@@ -34,11 +34,15 @@ import org.exist.config.ConfigurationException;
 import org.exist.config.annotation.*;
 import org.exist.security.*;
 import org.exist.security.internal.SecurityManagerImpl;
+import org.exist.security.internal.aider.GroupAider;
+import org.exist.security.internal.aider.UserAider;
 import org.exist.storage.DBBroker;
 import org.exist.storage.txn.Txn;
 
+import java.util.AbstractMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * @author <a href="mailto:loren.cahlander@gmail.com">Loren Cahlander</a>
@@ -104,7 +108,7 @@ public class JWTRealm extends AbstractRealm {
         Algorithm algorithmHS = Algorithm.HMAC256("secret");
         JWTVerifier verifier = JWT.require(algorithmHS).withIssuer("auth0").build();
         decodedJWT = verifier.verify(accountName);
-        final String name1 = this.jwtContextFactory.getAccount().getSearchAttribute(JWTAccount.JWTPropertyKey.valueOf("name"));
+        final String name1 = this.jwtContextFactory.getAccount().getSearchProperty(JWTAccount.JWTPropertyKey.valueOf("name"));
         String name = ((Claim) decodedJWT.getClaim(name1)).asString();
         final AbstractAccount account = (AbstractAccount) getAccount(name);
         return (Subject) account;
@@ -114,31 +118,120 @@ public class JWTRealm extends AbstractRealm {
 
         //first attempt to get the cached account
         final Account acct = super.getAccount(name);
+        try {
+            final DBBroker broker = getDatabase().get(Optional.of(getSecurityManager().getSystemSubject()));
 
-        if (acct != null) {
+            if (acct != null) {
 
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Cached used.");
+                if (LOG.isDebugEnabled()) {
+                    LOG.debug("Cached used.");
+                }
+
+                updateGroupsInDatabase(broker, this.decodedJWT, acct);
+
+                return acct;
+            } else {
+                return createAccountInDatabase(broker, this.decodedJWT, name);
             }
+        } catch (EXistException e) {
+            e.printStackTrace();
+        } catch (PermissionDeniedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 
-            updateGroupsInDatabase(this.decodedJWT, acct);
+    private void updateGroupsInDatabase(DBBroker broker, DecodedJWT decodedJWT, Account acct) throws PermissionDeniedException, EXistException {
+        final String claim = this.jwtContextFactory.getGroup().getClaim();
+        final List<String> dbaList = this.jwtContextFactory.getGroup().getDbaList().getPrincipals();
+        final List<String> groupNames = ((Claim) decodedJWT.getClaim(claim)).asList(String.class);
+        final String[] acctGroups = acct.getGroups();
 
-            return acct;
-        } else {
-            return createAccountInDatabase(this.decodedJWT, name);
+        for (final String accountGroup : acctGroups) {
+            if (!groupNames.contains(accountGroup)) {
+                acct.remGroup(accountGroup);
+            }
+        }
+
+        for (final String groupName : groupNames) {
+            if (acct.hasGroup(groupName)) {
+                continue;
+            }
+            if (dbaList.contains(groupName)) {
+                if (!acct.hasDbaRole()) {
+                    acct.addGroup(getSecurityManager().getDBAGroup());
+                }
+            }
+            final Group group = super.getGroup(groupName);
+
+            if (group != null) {
+                acct.addGroup(group);
+            } else {
+                final GroupAider groupAider = new GroupAider(ID, groupName);
+                final Group newGroup = getSecurityManager().addGroup(broker, groupAider);
+                acct.addGroup(newGroup);
+            }
         }
 
     }
 
-    private void updateGroupsInDatabase(DecodedJWT decodedJWT, Account acct) {
+    private Account createAccountInDatabase(DBBroker broker, DecodedJWT decodedJWT, String name) throws PermissionDeniedException, EXistException {
+        Account account = null;
+        final String claim = this.jwtContextFactory.getGroup().getClaim();
+        final List<String> jwtGroupNames = ((Claim) decodedJWT.getClaim(claim)).asList(String.class);
+        final List<String> dbaList = this.jwtContextFactory.getGroup().getDbaList().getPrincipals();
+
+        final UserAider userAider = new UserAider(ID, name);
+
+
+        //store any requested metadata
+        for (final AXSchemaType axSchemaType : AXSchemaType.values()) {
+            final String metadataSearchProperty = this.jwtContextFactory.getAccount().getMetadataSearchProperty(axSchemaType);
+            if (metadataSearchProperty != null) {
+                final String s = ((Claim) decodedJWT.getClaim(metadataSearchProperty)).asString();
+                if (s != null) {
+                    userAider.setMetadataValue(axSchemaType, s);
+                }
+            }
+        }
+
+        boolean dbaNotAdded = true;
+
+        for (final String jwtGroupName : jwtGroupNames) {
+            if (dbaNotAdded && dbaList.contains(jwtGroupName)) {
+                userAider.addGroup(getSecurityManager().getDBAGroup());
+                dbaNotAdded = false;
+            }
+            final Group group = super.getGroup(jwtGroupName);
+
+            if (group != null) {
+                userAider.addGroup(group);
+            } else {
+                final GroupAider groupAider = new GroupAider(ID, jwtGroupName);
+                final Group group1 = getSecurityManager().addGroup(broker, groupAider);
+                userAider.addGroup(group1);
+            }
+        }
+
+        try {
+            account = getSecurityManager().addAccount(broker, userAider);
+        } catch (PermissionDeniedException e) {
+            e.printStackTrace();
+        } catch (EXistException e) {
+            e.printStackTrace();
+        }
+
+        return account;
     }
 
-    private Account createAccountInDatabase(DecodedJWT decodedJWT, String name) {
-        final String givenNameProperty = this.jwtContextFactory.getAccount().getMetadataSearchAttribute(AXSchemaType.FIRSTNAME);
-        final String familyNameProperty = this.jwtContextFactory.getAccount().getMetadataSearchAttribute(AXSchemaType.LASTNAME);
-        String givenName = ((Claim) decodedJWT.getClaim(givenNameProperty)).asString();
-        String familyName = ((Claim) decodedJWT.getClaim(familyNameProperty)).asString();
-        final List<String> groups = ((Claim) decodedJWT.getClaim("groups")).asList(String.class);
-        return null;
+    private Group createGroupInDatabase(final DBBroker broker, final String groupname) throws AuthenticationException {
+        try {
+            //return sm.addGroup(instantiateGroup(this, groupname));
+            return getSecurityManager().addGroup(broker, new GroupAider(ID, groupname));
+
+        } catch (Exception e) {
+            throw new AuthenticationException(AuthenticationException.UNNOWN_EXCEPTION, e.getMessage(), e);
+        }
     }
+
 }

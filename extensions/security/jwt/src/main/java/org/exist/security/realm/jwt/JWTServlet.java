@@ -31,10 +31,7 @@ import org.exist.xquery.XQueryContext;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
-import javax.servlet.http.HttpServlet;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import javax.servlet.http.HttpSession;
+import javax.servlet.http.*;
 import java.io.IOException;
 import java.io.PrintWriter;
 
@@ -60,16 +57,43 @@ public class JWTServlet extends HttpServlet implements ExistExtensionServlet {
     @Override
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
-        // Get reverse proxy header when available, otherwise use regular IP address
-        String authorization = request.getHeader("Authorization");
-        // there may be a comma-separated chain of proxies
-        if(authorization != null && !authorization.isEmpty()) {
+        String jsonResponse = "{\"fail\":\"JSON Web Token not authenticated\"}";
 
+        String authorization = request.getHeader("Authorization");
+        boolean isCookie = false;
+
+        if (JWTRealm.getInstance().jwtContextFactory.isConfigured()) {
+            final String cookieName = JWTRealm.getInstance().ensureContextFactory().getCookie();
+            final Cookie[] cookies = request.getCookies();
+            for (final Cookie cookie : cookies) {
+                if (cookie.getName().equals(cookieName)) {
+                    authorization = cookie.getValue();
+                    isCookie = true;
+                }
+            }
         }
 
-        LOG.info("Detected JSON Web Token {}", authorization);
+        if (!isCookie) {
+            if(authorization != null && !authorization.isEmpty()) {
+                if (authorization.startsWith("Bearer")) {
+                    authorization = authorization.substring(6);
 
-        String jsonResponse = "{\"fail\":\"JSON Web Token not authenticated\"}";
+                    LOG.info("Detected JSON Web Token {}", authorization);
+                } else {
+                    response.setContentType("application/json");
+                    final PrintWriter out = response.getWriter();
+                    out.print(jsonResponse);
+                    out.flush();
+                    return;
+                }
+            } else {
+                response.setContentType("application/json");
+                final PrintWriter out = response.getWriter();
+                out.print(jsonResponse);
+                out.flush();
+                return;
+            }
+        }
 
         final SecurityManager securityManager = JWTRealm.getInstance().getSecurityManager();
         try {
@@ -77,13 +101,6 @@ public class JWTServlet extends HttpServlet implements ExistExtensionServlet {
 
             if (user != null) {
                 LOG.info("JWTServlet user {} found", user.getUsername());
-
-                // Security check
-                if (user.hasDbaRole()) {
-                    LOG.error("User {} has DBA rights, will not be authorized", user.getUsername());
-                    return;
-                }
-
 
                 final HttpSession session = request.getSession();
                 // store the user in the session

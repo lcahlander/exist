@@ -39,6 +39,10 @@ import java.util.Set;
  */
 @ConfigurationClass("group")
 public class JWTGroup implements Configurable {
+
+    @ConfigurationFieldAsElement("claim")
+    protected String claim = null;
+
     @ConfigurationFieldAsElement("property")
     protected Map<String, String> searchProperties = new HashMap<>();
 
@@ -59,6 +63,8 @@ public class JWTGroup implements Configurable {
     public JWTGroup(final Configuration config) {
         this.configuration = Configurator.configure(this, config);
     }
+
+    public String getClaim() { return claim; }
 
     public JWTPrincipalDBAList getDbaList() { return dbaList; }
 

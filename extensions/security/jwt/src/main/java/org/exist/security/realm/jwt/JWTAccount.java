@@ -67,11 +67,11 @@ public class JWTAccount  implements Configurable {
         return whiteList;
     }
 
-    public String getSearchAttribute(final JWTPropertyKey jwtPropertyKey) {
+    public String getSearchProperty(final JWTPropertyKey jwtPropertyKey) {
         return searchProperties.get(jwtPropertyKey.getKey());
     }
 
-    public String getMetadataSearchAttribute(final AXSchemaType axSchemaType) {
+    public String getMetadataSearchProperty(final AXSchemaType axSchemaType) {
         return metadataProperties.get(axSchemaType.getNamespace());
     }
 
