@@ -39,9 +39,7 @@ import org.exist.security.internal.aider.UserAider;
 import org.exist.storage.DBBroker;
 import org.exist.storage.txn.Txn;
 
-import java.util.AbstractMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -55,10 +53,10 @@ public class JWTRealm extends AbstractRealm {
     private static JWTRealm instance = null;
 
     @ConfigurationFieldAsAttribute("id")
-    final public static String ID = "JWT";
+    public final static String ID = "JWT";
 
     @ConfigurationFieldAsAttribute("version")
-    public static final String version = "1.0";
+    public static final String VERSION = "1.0";
 
     @ConfigurationFieldAsElement("context")
     protected JWTContextFactory jwtContextFactory;
@@ -87,6 +85,8 @@ public class JWTRealm extends AbstractRealm {
         return ID;
     }
 
+    public String getVersion() { return VERSION; }
+
     @Override
     public void start(final DBBroker broker, final Txn transaction) throws EXistException {
         super.start(broker, transaction);
@@ -105,8 +105,10 @@ public class JWTRealm extends AbstractRealm {
 
     @Override
     public Subject authenticate(String accountName, Object credentials) throws AuthenticationException {
-        Algorithm algorithmHS = Algorithm.HMAC256("secret");
-        JWTVerifier verifier = JWT.require(algorithmHS).withIssuer("auth0").build();
+        final String secret = this.ensureContextFactory().getSecret();
+        final String issuer = this.ensureContextFactory().getIssuer();
+        Algorithm algorithmHS = Algorithm.HMAC256(secret);
+        JWTVerifier verifier = JWT.require(algorithmHS).withIssuer(issuer).build();
         decodedJWT = verifier.verify(accountName);
         final String name1 = this.jwtContextFactory.getAccount().getSearchProperty(JWTAccount.JWTPropertyKey.valueOf("name"));
         String name = ((Claim) decodedJWT.getClaim(name1)).asString();
