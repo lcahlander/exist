@@ -44,6 +44,9 @@ public class JWTContextFactory implements Configurable {
     @ConfigurationFieldAsElement("cookie")
     protected String cookie = null;
 
+    @ConfigurationFieldAsElement("header-prefix")
+    protected String headerPrefix = null;
+
     @ConfigurationFieldAsElement("account")
     protected JWTAccount account;
 
@@ -63,6 +66,8 @@ public class JWTContextFactory implements Configurable {
     public String getIssuer() { return issuer; }
 
     public String getCookie() { return cookie; }
+
+    public String getHeaderPrefix() { return headerPrefix; }
 
     public JWTAccount getAccount() { return account; }
 

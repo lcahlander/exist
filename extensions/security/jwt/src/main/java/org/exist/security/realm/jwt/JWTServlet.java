@@ -58,9 +58,11 @@ public class JWTServlet extends HttpServlet implements ExistExtensionServlet {
     protected void doPost(final HttpServletRequest request, final HttpServletResponse response)
             throws ServletException, IOException {
         String jsonResponse = "{\"fail\":\"JSON Web Token not authenticated\"}";
+        String redirect = request.getParameter("redirect");
 
         String authorization = request.getHeader("Authorization");
         boolean isCookie = false;
+        boolean successfulLogin = false;
 
         if (JWTRealm.getInstance().jwtContextFactory.isConfigured()) {
             final String cookieName = JWTRealm.getInstance().ensureContextFactory().getCookie();
@@ -75,8 +77,12 @@ public class JWTServlet extends HttpServlet implements ExistExtensionServlet {
 
         if (!isCookie) {
             if(authorization != null && !authorization.isEmpty()) {
-                if (authorization.startsWith("Bearer")) {
-                    authorization = authorization.substring(6);
+                String prefix = JWTRealm.getInstance().ensureContextFactory().getHeaderPrefix();
+                if (prefix == null) {
+                    prefix = "Bearer ";
+                }
+                if (authorization.startsWith(prefix)) {
+                    authorization = authorization.substring(prefix.length() - 1);
 
                     LOG.info("Detected JSON Web Token {}", authorization);
                 } else {
@@ -101,6 +107,7 @@ public class JWTServlet extends HttpServlet implements ExistExtensionServlet {
 
             if (user != null) {
                 LOG.info("JWTServlet user {} found", user.getUsername());
+                successfulLogin = true;
 
                 final HttpSession session = request.getSession();
                 // store the user in the session
@@ -121,6 +128,9 @@ public class JWTServlet extends HttpServlet implements ExistExtensionServlet {
             response.setContentType("application/json");
             final PrintWriter out = response.getWriter();
             out.print(jsonResponse);
+            if (successfulLogin && redirect != null) {
+                response.sendRedirect(redirect);
+            }
             out.flush();
         }
 
